@@ -4,45 +4,48 @@
 A web search engine like Google through an API.
 The goal is to index an infinite list of URLs (web pages), and then be able to quickly search relevant URLs against a query. This engine uses the ElasticSearch database.
 
-## Indexing
+### Indexing
 The indexing operation of a new URL first crawls URL, then extracts the title and main text content from the page.
 Then, a new document representing the URL's data is saved in ElasticSearch, and goes for indexing.
 
-## Searching
+### Searching
 When searching for relevant URLs, the engine will compare the query with the data of each document (web page), and retrieve a list of URLs matching the query, sorted by relevance.
 
-This search engine works for English, French and German URLs only (language of content).
+### Note
+This search engine works for English, French and German pages only.
 
-## INSTALL AND RUN WITH PIP
-To install the web search engine, follow these steps :
+## REQUIREMENTS
+This tool requires *Python3+* and *ElasticSearch5+*.
+
+## INSTALL AND RUN
+
+### WITH PIP
 ```
 git clone https://github.com/AnthonySigogne/web-search-engine.git
 cd web-search-engine
 pip install -r requirements.txt
 ```
 
-Then, run the tool with this command :
+Then, run the tool :
 ```
 FLASK_APP=index.py HOST=<ip> PORT=<port> USERNAME=<username> PASSWORD=<password> flask run
 ```
 Where :
-- <ip> + <port> is the route to ElasticSearch
-- <username> + <password> are credentials to access ElasticSearch
+* `ip` + `port` : route to ElasticSearch
+* `username` + `password` : credentials to access
 
-To run in debug mode, prepend *FLASK_DEBUG=1* to the command :
+To run in debug mode, prepend `FLASK_DEBUG=1` to the command :
 ```
 FLASK_DEBUG=1 ... flask run
 ```
 
-To list all services of API, type this endpoint in your web browser : http://localhost:5000/
-
-## INSTALL AND RUN WITH DOCKER
+### WITH DOCKER
 To build this API with Docker :
 ```
 docker build -t web-search-engine .
 ```
 
-To run the Docker container :
+Then, run the Docker container :
 ```
 docker run -p <port>:5000 \
 -e "HOST=<ip>" \
@@ -51,5 +54,91 @@ docker run -p <port>:5000 \
 -e "PASSWORD=<password>" \
 web-search-engine
 ```
+Where :
+* `ip` + `port` : route to ElasticSearch
+* `username` + `password` : credentials to access ElasticSearch
 
 ## USAGE AND EXAMPLES
+To list all services of API, type this endpoint in your web browser : http://localhost:5000/
+
+### INDEXING
+Index a web page through its URL.
+
+* **URL**
+
+  /index
+
+* **Method**
+
+  `POST`
+
+* **Form Data Params**
+
+  **Required:**
+
+  `url=[string]`, the url to index
+
+  `language=[string]` can be `fr`, `en` or `de`
+
+* **Success Response**
+
+  * **Code:** 200 <br />
+    **Content:** `Success`
+
+
+* **Error Response**
+
+  * **Code:** 400 INVALID USAGE <br />
+
+
+* **Sample Call (with cURL)**
+
+  ```
+  curl http://localhost:5000/index --data "language=en&url=https://www.byprog.com/en/"
+  ```
+
+### SEARCHING
+Query engine to find a list of relevant URLs.
+Return the list of matching URLs sorted by relevance in JSON.
+
+* **URL**
+
+  /search
+
+* **Method**
+
+  `POST`
+
+* **Form Data Params**
+
+  **Required:**
+
+  `query=[string]`, the search query
+
+
+* **Success Response**
+
+  * **Code:** 200 <br />
+    **Content:**
+    ```
+    {
+      "results": [
+        {
+          "title": "Anthony Sigogne / Freelance / Full-Stack Developer",
+          "url": "https://www.byprog.com/en/"
+        }
+      ]
+    }
+    ```
+
+
+* **Error Response**
+
+  * **Code:** 400 INVALID USAGE <br />
+
+
+* **Sample Call (with cURL)**
+
+  ```
+  curl http://localhost:5000/search --data "query=freelance fullstack"
+  ```

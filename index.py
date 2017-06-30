@@ -115,7 +115,7 @@ def index():
 def search():
     """
     URL : /search
-    Query engine to find URLs against a search query.
+    Query engine to find a list of relevant URLs.
     Method : POST
     Form data :
         - query : the search query
