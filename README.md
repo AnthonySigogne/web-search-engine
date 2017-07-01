@@ -40,23 +40,25 @@ FLASK_DEBUG=1 ... flask run
 ```
 
 ### WITH DOCKER
-To build this API with Docker :
+To run the tool with Docker, you can use my DockerHub image :
 ```
-docker build -t web-search-engine .
-```
-
-Then, run the Docker container :
-```
-docker run -p <port>:5000 \
+docker run -p 5000:5000 \
 -e "HOST=<ip>" \
 -e "PORT=<port>" \
 -e "USERNAME=<username>" \
 -e "PASSWORD=<password>" \
-web-search-engine
+anthonysigogne/web-search-engine
 ```
 Where :
 * `ip` + `port` : route to ElasticSearch
 * `username` + `password` : credentials to access ElasticSearch
+
+Or, build yourself a Docker image :
+```
+git clone https://github.com/AnthonySigogne/web-search-engine.git
+cd web-search-engine
+docker build -t web-search-engine .
+```
 
 ## USAGE AND EXAMPLES
 To list all services of API, type this endpoint in your web browser : http://localhost:5000/
@@ -142,3 +144,10 @@ Return the list of matching URLs sorted by relevance in JSON.
   ```
   curl http://localhost:5000/search --data "query=freelance fullstack"
   ```
+
+## FUTURE FEATURES
+
+* add more languages
+* detect automatically the language of web page content
+* index more page features like description, keywords,...
+* create a client
