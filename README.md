@@ -41,6 +41,7 @@ FLASK_DEBUG=1 ... flask run
 
 ### WITH DOCKER
 To run the tool with Docker, you can use my DockerHub image :
+https://hub.docker.com/r/anthonysigogne/web-search-engine/
 ```
 docker run -p 5000:5000 \
 -e "HOST=<ip>" \
@@ -101,7 +102,7 @@ Index a web page through its URL.
 
 ### SEARCHING
 Query engine to find a list of relevant URLs.
-Return the list of matching URLs sorted by relevance in JSON.
+Return the sublist of matching URLs sorted by relevance, and the total of matching URLs, in JSON.
 
 * **URL**
 
@@ -115,8 +116,11 @@ Return the list of matching URLs sorted by relevance in JSON.
 
   **Required:**
 
-  `query=[string]`, the search query
+  `query=[string]`, the search query  
 
+  `start=[integer]`, the start of hits
+
+  `hits=[integer]`, the number of hits returned by query
 
 * **Success Response**
 
@@ -124,9 +128,11 @@ Return the list of matching URLs sorted by relevance in JSON.
     **Content:**
     ```
     {
+      "total": 1,
       "results": [
         {
           "title": "Anthony Sigogne / Freelance / Full-Stack Developer",
+          "description": "Full-Stack Developer specialized in new technologies and innovative IT solutions.",
           "url": "https://www.byprog.com/en/"
         }
       ]
@@ -146,8 +152,10 @@ Return the list of matching URLs sorted by relevance in JSON.
   ```
 
 ## FUTURE FEATURES
-
 * add more languages
 * detect automatically the language of web page content
-* index more page features like description, keywords,...
-* create a client
+* index more page features like keywords,...
+* highlight of matching parts like Google or Bing
+
+## LICENCE
+MIT

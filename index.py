@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-A web search engine like Google through an API.
+API - a simple web search engine.
 The goal is to index an infinite list of URLs (web pages), and then be able to quickly search relevant URLs against a query.
 
 - Indexing :
@@ -26,6 +26,7 @@ import os
 import re
 import justext
 import requests
+import html
 from flask import Flask, request, jsonify
 from elasticsearch_dsl.connections import connections
 from elasticsearch_dsl import Index, Search, Mapping
@@ -60,6 +61,7 @@ for lang in languages :
     m = Mapping('page')
     m.field('url', 'text', analyzer=languages[lang])
     m.field('title', 'text', analyzer=languages[lang])
+    m.field('description', 'text', analyzer=languages[lang])
     m.field('body', 'text', analyzer=languages[lang])
 
     # save the mapping in index
@@ -93,9 +95,15 @@ def index():
 
     # extract title of url
     try :
-        title = re.search("<title>([^<]+)</title>", r.text).group(1)
+        title = html.unescape(re.search("<title>([^<]+)</title>", r.text).group(1))
     except :
         title = "" # no title on page
+
+    # extract description of url
+    try :
+        description = html.unescape(re.search('<meta name="[^"]*description".*content="([^"]+)',r.text).group(1))
+    except :
+        description = "" # no description on page
 
     # extract main content of url
     lang = languages.get(data["language"])
@@ -105,6 +113,7 @@ def index():
     # index url and data
     res = client.index(index="web-%s"%data["language"], doc_type='page', id=data["url"], body={
         "title":title,
+        "description":description,
         "body":body,
         "url":data["url"]
     })
@@ -119,17 +128,23 @@ def search():
     Method : POST
     Form data :
         - query : the search query
-    Return a list of matching URLs sorted by relevance.
+        - hits : the number of hits returned by query
+        - start : the start of hits
+    Return a sublist of matching URLs sorted by relevance, and the total of matching URLs.
     """
     # get POST data
     data = dict((key, request.form.get(key)) for key in request.form.keys())
     if "query" not in data :
         raise InvalidUsage('No query specified in POST data')
+    start = int(data.get("start", "0"))
+    hits = int(data.get("hits", "10"))
+    if start < 0 or hits < 0 :
+        raise InvalidUsage('Start or hits cannot be negative numbers')
 
     # query search engine
     s = Search(index="web-*").using(client)
-    q = Q("multi_match", query=data["query"], fields=['title', 'body'])
-    s = s.query(q)
+    q = Q("multi_match", query=data["query"], fields=['title', 'description', 'body'])
+    s = s.query(q)[start:start+hits]
 
     # return list of matching results
-    return jsonify(results=[{"url":hit.url, "title":hit.title} for hit in s])
+    return jsonify(total=s.count(), results=[{"url":hit.url, "title":hit.title, "description":hit.description} for hit in s])
