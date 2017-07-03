@@ -101,7 +101,7 @@ def index():
 
     # extract description of url
     try :
-        description = html.unescape(re.search('<meta name="[^"]*description".*content="([^"]+)',r.text).group(1))
+        description = html.unescape(re.search('<meta name="[^">]*description"[^">]*content="([^">]+)',r.text).group(1))
     except :
         description = "" # no description on page
 
