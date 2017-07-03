@@ -107,7 +107,7 @@ def index():
 
     # extract main content of url
     lang = languages.get(data["language"])
-    paragraphs = justext.justext(r.text, justext.get_stoplist(lang))
+    paragraphs = justext.justext(r.text, justext.get_stoplist(lang[:1].upper()+lang[1:]))
     body = ". ".join([paragraph.text for paragraph in paragraphs if not paragraph.is_boilerplate])
 
     # index url and data
