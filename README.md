@@ -18,7 +18,8 @@ This search engine can be used with an UI : https://github.com/AnthonySigogne/we
 For the moment, this tool works for English, French and German pages only.
 
 ## DEMO
-A demo can be found here : http://searchengine.byprog.com/
+A demo can be found here : http://searchengine.byprog.com/  
+
 About 500 French URLs and 500 English URLs of the news network http://www.france24.com/ have been indexed.
 
 ## INSTALL AND RUN
