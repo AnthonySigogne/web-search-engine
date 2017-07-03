@@ -1,7 +1,7 @@
 # web-search-engine
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) ![Python 3.5](https://img.shields.io/badge/python-3.5-blue.svg)
 
-A web search engine like Google through an API.
+API - a simple web search engine.
 The goal is to index an infinite list of URLs (web pages), and then be able to quickly search relevant URLs against a query. This engine uses the ElasticSearch database.
 
 ### Indexing
@@ -118,9 +118,11 @@ Return the sublist of matching URLs sorted by relevance, and the total of matchi
 
   `query=[string]`, the search query  
 
-  `start=[integer]`, the start of hits
+  **Not required:**
 
-  `hits=[integer]`, the number of hits returned by query
+  `start=[integer]`, the start of hits (0 by default)
+
+  `hits=[integer]`, the number of hits returned by query (10 by default)
 
 * **Success Response**
 
