@@ -11,13 +11,20 @@ Then, a new document representing the URL's data is saved in ElasticSearch, and 
 ### Searching
 When searching for relevant URLs, the engine will compare the query with the data of each document (web page), and retrieve a list of URLs matching the query, sorted by relevance.
 
-### Note
-This search engine works for English, French and German pages only.
+### UI
+This search engine can be used with an UI : https://github.com/AnthonySigogne/web-search-engine-ui
 
-## REQUIREMENTS
-This tool requires *Python3+* and *ElasticSearch5+*.
+### Note
+For the moment, this tool works for English, French and German pages only.
+
+## DEMO
+A demo can be found here : http://searchengine.byprog.com/
+About 500 French URLs and 500 English URLs of the news network http://www.france24.com/ have been indexed.
 
 ## INSTALL AND RUN
+
+### REQUIREMENTS
+This tool requires *Python3+* and *ElasticSearch5+*.
 
 ### WITH PIP
 ```
@@ -158,6 +165,8 @@ Return the sublist of matching URLs sorted by relevance, and the total of matchi
 * detect automatically the language of web page content
 * index more page features like keywords,...
 * highlight of matching parts like Google or Bing
+* better scoring function
+* filter bad results
 
 ## LICENCE
 MIT
