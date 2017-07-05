@@ -28,6 +28,7 @@ from flask import Flask, request, jsonify
 from elasticsearch_dsl.connections import connections
 from elasticsearch_dsl import Index, Search, Mapping
 from elasticsearch_dsl.query import Q
+from language import languages
 
 # init flask app and import helper
 app = Flask(__name__)
@@ -39,37 +40,6 @@ hosts = [os.getenv("HOST")]
 http_auth = (os.getenv("USERNAME"), os.getenv("PASSWORD"))
 port = os.getenv("PORT")
 client = connections.create_connection(hosts=hosts, http_auth=http_auth, port=port)
-
-# declare a dictionary of languages (code -> long form)
-languages = {
-    "fr": "french",
-    "en": "english",
-    "de": "german",
-    "ro": "romanian",
-    "ru": "russian",
-    "ar": "arabic",
-    "hi": "hindi",
-    "es": "spanish",
-    "fi": "finnish",
-    "nl": "dutch",
-    "cs": "czech",
-    "ca": "catalan",
-    "bg": "bulgarian",
-    "pt": "portuguese",
-    "da": "danish",
-    "no": "norwegian",
-    "sv": "swedish",
-    "el": "greek",
-    "th": "thai",
-    "tr": "turkish",
-    "it": "italian",
-    "ga": "irish",
-    "hu": "hungarian",
-    "lt": "lithuanian",
-    "id": "indonesian",
-    "fa": "persian",
-    "lv": "latvian"
-}
 
 # create mapping of a web page for each language
 for lang in languages :
