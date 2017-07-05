@@ -15,7 +15,7 @@ When searching for relevant URLs, the engine will compare the query with the dat
 This search engine can be used with an UI : https://github.com/AnthonySigogne/web-search-engine-ui
 
 ### Note
-For the moment, this tool works for English, French and German pages only.
+This API works for a finite list of languages, see here for the complete list :   https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-lang-analyzer.html.
 
 ## DEMO
 A demo can be found here : http://searchengine.byprog.com/  
@@ -89,8 +89,6 @@ Index a web page through its URL.
 
   `url=[string]`, the url to index
 
-  `language=[string]` can be `fr`, `en` or `de`
-
 * **Success Response**
 
   * **Code:** 200 <br />
@@ -132,6 +130,8 @@ Return the sublist of matching URLs sorted by relevance, and the total of matchi
 
   `hits=[integer]`, the number of hits returned by query (10 by default)
 
+  `highlight=[integer]`, return highlight parts for each URL (0 or 1, 0 by default)
+
 * **Success Response**
 
   * **Code:** 200 <br />
@@ -149,7 +149,6 @@ Return the sublist of matching URLs sorted by relevance, and the total of matchi
     }
     ```
 
-
 * **Error Response**
 
   * **Code:** 400 INVALID USAGE <br />
@@ -162,10 +161,7 @@ Return the sublist of matching URLs sorted by relevance, and the total of matchi
   ```
 
 ## FUTURE FEATURES
-* add more languages
-* detect automatically the language of web page content
 * index more page features like keywords,...
-* highlight of matching parts like Google or Bing
 * better scoring function
 * filter bad results
 
