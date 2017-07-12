@@ -54,7 +54,7 @@ def extract_title(html) :
     try :
         title = unescape(re.search("<title>([^<]+)</title>", html).group(1))
     except :
-        title = "" # no title on page
+        title = None # no title on page
     return title
 
 def extract_description(html) :
@@ -64,5 +64,17 @@ def extract_description(html) :
     try :
         description = unescape(re.search('<meta name="[^">]*description"[^">]*content="([^">]+)',html).group(1))
     except :
-        description = "" # no description on page
+        description = None # no description on page
     return description
+
+def create_description(body) :
+    """
+    artificially create a description from main content of page (only, in case of no meta description).
+    """
+    # extract all long sentences (possible candidates)
+    candidates = sorted([sentence for sentence in body.split('.') if sentence.count(" ") > 10],key=lambda s : s.count(" "), reverse=True)
+
+    # return the best candidate or nothing
+    if not candidates :
+        return None
+    return candidates[0][:180]+"..."

@@ -164,6 +164,11 @@ Return the sublist of matching URLs sorted by relevance, and the total of matchi
 * index more page features like keywords,...
 * better scoring function
 * filter bad results
+* create a docker compose
+* traduct tools in several languages
+* connect to pixel tool
+* better description of results
+* redis to index a single url
 
 ## LICENCE
 MIT
