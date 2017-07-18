@@ -1,0 +1,61 @@
+version: '2'
+services:
+  redis:
+    image: "redis"
+    container_name: redis
+    volumes:
+      - $PWD/data/redis:/data
+    ports:
+      - 6379:6379
+  rq-dashboard:
+    image: "anthonysigogne/rq-dashboard"
+    container_name: rq-dashboard
+    restart: on-failure
+    ports:
+      - 9181:9181
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+  elasticsearch:
+    image: "docker.elastic.co/elasticsearch/elasticsearch:5.5.0"
+    container_name: elasticsearch
+    volumes:
+      - $PWD/data/elastic:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+  search-engine-job:
+    image: "web-search-engine"
+    container_name: web-search-engine
+    ports:
+      - "5000:5000"
+    restart: on-failure
+    environment:
+      - HOST=elasticsearch
+      - PORT=9200
+      - USERNAME=elastic
+      - PASSWORD=changeme
+      - FLASK_APP=index.py
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+  search-engine-ui:
+    image: "web-search-engine-ui"
+    container_name: web-search-engine-ui
+    ports:
+      - "80:5000"
+    restart: on-failure
+    environment:
+      - HOST=web-search-engine
+      - PORT=5000
+      - FLASK_APP=index.py
+  rq:
+    image: "rq"
+    container_name: rq
+    restart: on-failure
+    environment:
+      - HOST=elasticsearch
+      - PORT=9200
+      - USERNAME=elastic
+      - PASSWORD=changeme
+      - FLASK_APP=index.py
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379

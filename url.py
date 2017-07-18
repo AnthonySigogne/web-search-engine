@@ -16,7 +16,14 @@ import langdetect
 import html2text
 import requests
 import justext
+import tldextract
 from html import unescape
+
+def domain(url) :
+    """
+    Get the domain of the url.
+    """
+    return tldextract.extract(url).registered_domain
 
 def crawl(url) :
     """
@@ -33,6 +40,14 @@ def detect_language(html) :
     """
     Detect the language of the text content of a page.
     """
+    # handle string, need bytes
+    try :
+        html = html.decode("utf8")
+    except :
+        try :
+            html = html.decode("latin1")
+        except :
+            pass
     h = html2text.HTML2Text()
     return langdetect.detect(h.handle(html))
 
@@ -40,12 +55,15 @@ def extract_content(html, lang) :
     """
     Extract the main text content of a page by removing boilerplate parts.
     """
+    body = []
+    boilerplate = []
     paragraphs = justext.justext(html, justext.get_stoplist(lang[:1].upper()+lang[1:]))
-    body = ". ".join([paragraph.text for paragraph in paragraphs if not paragraph.is_boilerplate])
-    if not body :
-        # error, return all paragraphs
-        body = ". ".join([paragraph.text for paragraph in paragraphs])
-    return body
+    for p in paragraphs :
+        if p.text.count(" ") >= 5 :
+            body.append(p.text)
+        else :
+            boilerplate.append(p.text)
+    return ". ".join(body), ". ".join(boilerplate)
 
 def extract_title(html) :
     """
@@ -72,9 +90,9 @@ def create_description(body) :
     artificially create a description from main content of page (only, in case of no meta description).
     """
     # extract all long sentences (possible candidates)
-    candidates = sorted([sentence for sentence in body.split('.') if sentence.count(" ") > 10],key=lambda s : s.count(" "), reverse=True)
+    candidates = sorted([sentence for sentence in body.split('.')],key=lambda s : s.count(" "), reverse=True)
 
     # return the best candidate or nothing
     if not candidates :
         return None
-    return candidates[0][:180]+"..."
+    return candidates[0]

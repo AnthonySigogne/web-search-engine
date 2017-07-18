@@ -1,6 +1,6 @@
 FROM python:3.5-alpine
 
-RUN apk add --no-cache gcc g++ make linux-headers libxml2 libxslt-dev
+RUN apk add --no-cache gcc g++ make linux-headers libxml2 libxslt-dev libffi-dev openssl-dev
 
 ENV FLASK_APP index.py
 
