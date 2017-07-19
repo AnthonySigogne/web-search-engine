@@ -5,11 +5,22 @@ import requests
 import os
 import url
 import scrapy
+import base64
+import io
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 from scrapy.http import Request
 from language import languages
 from collections import Counter
+from PIL import Image
+from rq.decorators import job
+from rq import Queue
+from elasticsearch_dsl.connections import connections
+
+hosts = [os.getenv("HOST")]
+http_auth = (os.getenv("USERNAME"), os.getenv("PASSWORD"))
+port = os.getenv("PORT")
+client = connections.create_connection(hosts=hosts, http_auth=http_auth, port=port)
 
 class SingleSpider(scrapy.spiders.CrawlSpider):
     """
@@ -18,6 +29,7 @@ class SingleSpider(scrapy.spiders.CrawlSpider):
     name = "spider"
     handle_httpstatus_list = [301, 302, 303] # redirection allowed
     es_client=None # elastic client
+    redis_conn=None # redis client
 
     def parse(self, response):
         yield pipeline(response, self)
@@ -33,6 +45,7 @@ class Crawler(scrapy.spiders.CrawlSpider):
         Rule(LinkExtractor(), callback='parse_items', follow=True, process_links='links_processor'),
     )
     es_client=None  # elastic client
+    redis_conn=None # redis client
 
     def links_processor(self,links):
         """
@@ -108,9 +121,56 @@ def pipeline(response, spider) :
         "weight":weight
     })
 
+    # try to create thumbnail from page
+    img_link = response.css("meta[property='og:image']::attr(content)").extract_first()
+    if not img_link :
+        img_link = response.css("meta[name='twitter:image']::attr(content)").extract_first()
+    if img_link :
+        q = Queue(connection=spider.redis_conn)
+        q.enqueue(create_thumbnail, response.url, lang, img_link)
+
     # check for redirect url
     if response.status in spider.handle_httpstatus_list and 'Location' in response.headers:
         newurl = response.headers['Location']
         meta = {'dont_redirect': True, "handle_httpstatus_list" : spider.handle_httpstatus_list}
         meta.update(response.request.meta)
         return Request(url = newurl.decode("utf8"), meta = meta, callback=spider.parse)
+
+
+def create_thumbnail(url_id, lang, link) :
+    """
+    Create a thumbnail from image link.
+    """
+    print("create thumbnail of : %s"%link)
+
+    size = 143, 143
+    r = requests.get(link, stream=True) # get image data
+    if r.status_code == 200:
+        img = Image.open(io.BytesIO(r.content))
+        format_ = img.format # format of image (mime type: jpg, png,...)
+        longer_side = max(img.size)
+        horizontal_padding = (longer_side - img.size[0]) / 2
+        vertical_padding = (longer_side - img.size[1]) / 2
+        # crop image
+        img = img.crop(
+            (
+                -horizontal_padding,
+                -vertical_padding,
+                img.size[0] + horizontal_padding,
+                img.size[1] + vertical_padding
+            )
+        )
+        img.thumbnail(size) # create thumbnail
+        # encode in base64
+        buffer_ = io.BytesIO()
+        img.save(buffer_, format=format_)
+        img_str = b"data:image/%s;base64,%s"%(format_.lower().encode("utf8"),base64.b64encode(buffer_.getvalue()))
+        img_str = img_str.decode("utf8")
+
+        # finally, save into elasticsearch
+        url = client.get(index="web-%s"%lang, doc_type='page', id=url_id)
+        url["_source"]["thumbnail"] = img_str
+        res = client.index(index="web-%s"%lang, doc_type='page', id=url_id, body=url["_source"])
+        return 1
+
+    return 0

@@ -8,3 +8,4 @@ scrapy
 tldextract
 redis
 rq
+pillow

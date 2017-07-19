@@ -87,7 +87,7 @@ def extract_description(html) :
 
 def create_description(body) :
     """
-    artificially create a description from main content of page (only, in case of no meta description).
+    Artificially create a description from main content of page (only, in case of no meta description).
     """
     # extract all long sentences (possible candidates)
     candidates = sorted([sentence for sentence in body.split('.')],key=lambda s : s.count(" "), reverse=True)

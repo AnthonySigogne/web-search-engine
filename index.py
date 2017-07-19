@@ -69,6 +69,7 @@ for lang in ["fr"] : #languages :
     m.field('description', 'text', analyzer=languages[lang])
     m.field('body', 'text', analyzer=languages[lang])
     m.field('weight', 'long')
+    #m.field('thumbnail', 'binary')
     #m.field('keywords', 'completion') # -- TEST -- #
     m.save('web-%s'%lang)
 
@@ -81,6 +82,7 @@ if not index.exists() :
 m = Mapping('domain')
 m.field('homepage', 'keyword')
 m.field('domain', 'keyword')
+m.field('email', 'keyword')
 m.field('last_crawl', 'date')
 #m.field('keywords', 'text', analyzer=languages[lang])
 m.save('web')
@@ -126,7 +128,7 @@ def index_job(link) :
             'scrapy.spidermiddlewares.httperror.HttpErrorMiddleware':True
         }
     })
-    process.crawl(crawler.SingleSpider, start_urls=[link,], es_client=client)
+    process.crawl(crawler.SingleSpider, start_urls=[link,], es_client=client, redis_conn=redis_conn)
     process.start() # block until finished
 
 @app.route("/explore", methods=['POST'])
@@ -186,8 +188,52 @@ def explore_job(link) :
         },
         'CLOSESPIDER_PAGECOUNT':500 #only for debug
     })
-    process.crawl(crawler.Crawler, allowed_domains=[urlparse(link).netloc], start_urls = [link,], es_client=client)
+    process.crawl(crawler.Crawler, allowed_domains=[urlparse(link).netloc], start_urls = [link,], es_client=client, redis_conn=redis_conn)
     process.start()
+
+    return 1
+
+@app.route("/reference", methods=['POST'])
+def reference():
+    """
+    URL : /reference
+    Request the referencing of a website.
+    Method : POST
+    Form data :
+        - url : url to website
+        - email : contact email
+    Return a success message.
+    """
+    # get POST data
+    data = dict((key, request.form.get(key)) for key in request.form.keys())
+    if "url" not in data or "email" not in data :
+        raise InvalidUsage('No url or email specified in POST data')
+
+    # launch exploration job
+    reference_job.delay(data["url"], data["email"])
+
+    return "Referencing started"
+
+@job('default', connection=redis_conn)
+def reference_job(link, email) :
+    """
+    Request the referencing of a website.
+    """
+    print("referencing page %s with email %s"%(link,email))
+
+    # get final url after possible redictions
+    try :
+        link = url.crawl(link).url
+    except :
+        return 0
+
+    # create or update domain data
+    domain = url.domain(link)
+    res = client.index(index="web", doc_type='domain', id=domain, body={
+        "homepage":link,
+        "domain":domain,
+        "email":email
+    })
 
     return 1
 
@@ -212,8 +258,8 @@ def search():
                 description = highlight["description"][0]+"..."
             elif "body" in highlight :
                 description = highlight["body"][0]+"..."
-            if "title" in highlight :
-                title = highlight["title"][0]
+            """if "title" in highlight :
+                title = highlight["title"][0]"""
 
         # create false title and description for better user experience
         if not title :
@@ -224,7 +270,8 @@ def search():
         return {
             "title":title,
             "description":description,
-            "url":hit["url"]
+            "url":hit["url"],
+            "thumbnail":hit.get("thumbnail", None)
         }
 
     # get POST data
